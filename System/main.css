@@ -1,0 +1,416 @@
+body {
+  background: #f9fbfc;
+  font-family: "Aharoni", sans-serif;
+  margin: 0;
+  padding: 0;
+  margin-bottom: 0;
+}
+
+.hiding {
+  display: none;
+}
+
+/* Restored Navigation Styles */
+nav {
+  border-bottom: 1px solid black;
+  margin-bottom: 3rem;
+}
+
+.clai {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.Htitle {
+  display: none;
+}
+
+#name {
+  text-align: center;
+  font-weight: bold;
+}
+
+@media (min-width: 992px) {
+  .Htitle {
+      display: block;
+  }
+  .navName {
+      display: none;
+  }
+}
+
+/* Cards */
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: none;
+  border-radius: 10px;
+}
+
+.hover-effect:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.card-title {
+  font-weight: bold;
+  color: #333;
+}
+
+.card-text {
+  color: #666;
+}
+
+/* Ensure consistent image height */
+.card .col-4 {
+  display: flex;
+  align-items: center;
+  padding: 0; /* Remove padding to control image size precisely */
+}
+
+.card img {
+  height: 150px; 
+  width: 100%; 
+  object-fit: cover; 
+  border-radius: 10px 0 0 10px; 
+}
+
+/* Ensure the card body has consistent height */
+.card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+/* Pagination */
+.pagination .page-link {
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-weight: bold;
+}
+
+.pagination {
+  gap: 30%;
+}
+
+/* Restored Disabled State */
+.disabled {
+  color: grey;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Calendar */
+#calendar {
+  width: 320px; /* Adjust width */
+  text-align: center;
+  font-family: "Aharoni", sans-serif;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  flex-direction: column;
+  align-items: center; /* Ensures inner elements align correctly */
+}
+
+#calendar button {
+  background-color: transparent;
+  font-weight: bold;
+  border-radius: 20%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  width: 14%;
+  padding: 10px;
+}
+
+td {
+  cursor: pointer;
+}
+
+td:hover {
+  background-color: #eee;
+}
+
+.selected {  
+  color: white;
+  border-radius: 50%; /* Ensures a perfect circle */
+  width: 34px; /* Fixed width */
+  height: 34px; /* Fixed height */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: auto; /* Center within the cell */
+  background-color: #6f42c1;
+}
+
+.text-primary{
+  margin: 2rem 0;
+}
+
+/* Time Slots */
+#time-slots-container {
+  max-width: 400px;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin: 20px auto;
+}
+
+.time-slot-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.time-slot {
+  padding: 8px 12px;
+  background: #e9ecef;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background-color 0.2s;
+}
+
+.time-slot:hover {
+  background: #ced4da;
+}
+
+.selected-slot {
+  background: #6f42c1;
+  color: white;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+}
+
+/* Form */
+#former {
+  max-width: 400px;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.form-control {
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 16px;
+}
+
+/* Restored Form Styles */
+.form-floating label {
+  color: #777;
+}
+
+.d-grid button {
+  width: 100%;
+  font-size: 18px;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.success {
+  width: 100%;
+  font-size: 18px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #4bb543;
+  color: white;
+  margin-bottom: 10%;
+}
+
+.unsuccess {
+  width: 100%;
+  font-size: 18px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #fc100d;
+  color: white;
+  margin-bottom: 10%;
+}
+
+#code {
+  width: 100%;
+  font-size: 18px;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+#codebox {
+  width: 100%;
+  font-size: 18px;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+#letKnower {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.selectorOption {
+  width: auto;
+}
+
+#deletebook {
+  background: #fc100d;
+  border-color: #fc100d;
+}
+
+.btn-primary {
+  background-color: #6f42c1;
+  border-color: #6f42c1;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 18px;
+  transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+  background-color: #5a32a3;
+  border-color: #5a32a3;
+}
+
+/* Footer */
+footer {
+  background: linear-gradient(135deg, #343a40, #212529);
+  margin-top: 2rem;
+}
+
+footer a:hover {
+  color: #6f42c1 !important;
+  text-decoration: none;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  #calendar, #former, #time-slots-container {
+      max-width: 100%;
+  }
+
+  .card .row {
+      flex-direction: column;
+  }
+
+  .card .col-4, .card .col-8 {
+      width: 100%;
+  }
+
+  .card img {
+      height: 200px; /* Slightly larger height for mobile */
+      border-radius: 10px 10px 0 0;
+  }
+
+  .pagination {
+      gap: 10%;
+  }
+}
+
+/* Appointment Type Menu Enhancements */
+#apointType {
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#apointType .card {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#apointType .card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+#practit.card-header {
+  background: linear-gradient(135deg, #6f42c1, #8a5ed6);
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding: 15px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+#apointType .card-body {
+  padding: 0; /* Remove default padding to control inner card */
+}
+
+#apointType .card-body .card {
+  border: none;
+  width: 100%; /* Override inline style for responsiveness */
+  margin: 0;
+  background: transparent;
+}
+
+#apointList.list-group {
+  border-radius: 0;
+  overflow: hidden;
+}
+
+#apointList button.list-group-item {
+  border: none;
+  border-bottom: 1px solid #eee;
+  padding: 12px 20px;
+  font-size: 1rem;
+  color: #333;
+  background: #fafafa;
+  transition: all 0.3s ease;
+  text-align: left;
+  cursor: pointer;
+}
+
+#apointList button.list-group-item:hover {
+  background: #f0f0f0;
+  color: #6f42c1;
+  padding-left: 25px; /* Slight indent on hover */
+}
+
+#apointList button.list-group-item.selected-slot {
+  background: #6f42c1;
+  color: white;
+  font-weight: 500;
+  border-bottom: 1px solid #5a32a3;
+}
+
+#apointList button.list-group-item.selected-slot:hover {
+  background: #5a32a3;
+  padding-left: 25px;
+}
+
+#apointList button.list-group-item:last-child {
+  border-bottom: none;
+}
+
+#apointType .card-footer {
+  background: #f8f9fa;
+  padding: 10px;
+  font-size: 0.9rem;
+}
