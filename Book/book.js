@@ -396,21 +396,32 @@ function doEverythingElse() {
     if (sectionCounter == 1) {
       getAppointmentTypes();
     } else if (sectionCounter == 2) {
-      if(document.querySelector(".selected-slot")){
-        document.querySelector(".selected-slot").classList.remove("selected-slot");
-        let morn = document.querySelector("#morning");
-        let children =  morn.children
-        children.forEach(child =>{
+      // Deselect previously selected slot
+      const selectedSlot = document.querySelector(".selected-slot");
+      if (selectedSlot) {
+        selectedSlot.classList.remove("selected-slot");
+      }
+  
+      // Clear morning slots
+      const morn = document.querySelector("#morning");
+      if (morn) {
+        // Convert children to array to use forEach
+        Array.from(morn.children).forEach(child => {
           child.remove();
         });
       }
-      if(document.querySelector(".selected")){
-        document.querySelector(".selected").classList.remove("selected");
+  
+      // Deselect selected date (if any)
+      const selected = document.querySelector(".selected");
+      if (selected) {
+        selected.classList.remove("selected");
       }
+  
       // Initial Render
       updateCalendar();
     }
   }
+  
 
 
   //#endregion
