@@ -1,0 +1,23 @@
+{
+  "name": "booking-calendar-system",
+  "version": "1.0.0",
+  "description": "Creating a booking appointment system",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zannlin/Booking-Calendar-System.git"
+  },
+  "author": "Zander Lindeque",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zannlin/Booking-Calendar-System/issues"
+  },
+  "homepage": "https://github.com/zannlin/Booking-Calendar-System#readme",
+  "dependencies": {
+    "mongodb": "^6.16.0"
+  }
+}
