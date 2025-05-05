@@ -3,6 +3,8 @@ import { google } from "googleapis";
 import cors from "cors";
 import dotenv from "dotenv";
 import fetch from "node-fetch";
+import mongoose from 'mongoose';
+import bookingRoutes from './System/bookingRoutes.js';
 
 dotenv.config(); // Load environment variables
 
@@ -13,7 +15,8 @@ app.use(express.json());
 const GOOGLE_PRIVATE_KEY = process.env.private_key.replace(/\\n/g, "\n");
 const GOOGLE_CLIENT_EMAIL = process.env.client_email;
 const GOOGLE_PROJECT_NUMBER = process.env.project_number;
-const PORT = process.env.PORT || 5000;
+const port = process.env.port || 3000;
+
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar"];
 
@@ -135,10 +138,6 @@ app.post("/events", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
-
 //Deleting an event
 app.delete("/events/:practitioner/:eventId", async (req, res) => {
   try {
@@ -244,4 +243,28 @@ app.post("/send-whatsapp", async (req, res) => {
       details: error.message
     });
   }
+});
+
+
+const mongoURI = process.env.MONGODB_URI;
+console.log(mongoURI); // Add this line for debugging
+
+
+mongoose.connect(mongoURI, {
+  serverSelectionTimeoutMS: 5000,  // Timeout value can still be useful
+  connectTimeoutMS: 10000
+})
+.then(() => console.log('MongoDB Connected'))
+.catch((err) => console.error('MongoDB connection error:', err));
+
+
+  // Add routes
+app.use('/api/bookings', bookingRoutes);
+
+app.get('/', (req, res) => {
+  res.send('API running');
+});
+
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
 });
