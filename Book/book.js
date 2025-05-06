@@ -278,7 +278,8 @@ async function createEvent(
   end,
   description,
   name,
-  phone, code
+  phone,
+  code
 ) {
   const eventData = {
     practitioner: practitioner,
@@ -291,6 +292,7 @@ async function createEvent(
   const bookingData = {
     code,
     name,
+    practitioner,
     service: summary,
     date: start,
     time: start.split("T")[1], // Extracts time portion from ISO datetime
@@ -303,7 +305,7 @@ async function createEvent(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(eventData),
     });
-    const calendarResult  = await response.json();
+    const calendarResult = await response.json();
     //console.log("Event Created:", calendarResult );
 
     // Save to MongoDB
@@ -314,10 +316,14 @@ async function createEvent(
     });
     const bookingResult = await bookingResponse.json();
 
-    console.log("Event created in Google Calendar and booking saved:", {
-      calendar: calendarResult,
-      mongo: bookingResult,
-    });
+    if (bookingResponse.ok) {
+      console.log("Event created in Google Calendar and booking saved:", {
+        calendar: calendarResult,
+        mongo: bookingResult,
+      });
+    } else {
+      console.error("Failed to save booking to MongoDB:", bookingResult);
+    }
   } catch (error) {
     console.error("Error creating event:", error);
   }
@@ -339,9 +345,12 @@ async function deleteEvent(practitioner, eventId, code) {
     }
 
     // Then delete the booking from MongoDB (using booking ID)
-    const responseMongoDB = await fetch(`http://localhost:5000/api/bookings/${code}`, {
-      method: "DELETE",
-    });
+    const responseMongoDB = await fetch(
+      `http://localhost:5000/api/bookings/${code}`,
+      {
+        method: "DELETE",
+      }
+    );
 
     const data = await responseMongoDB.json();
 
@@ -799,7 +808,10 @@ function doEverythingElse() {
             appointName,
             formatedStartDate,
             formatedEndDate,
-            description, name, phone, fullCode
+            description,
+            name,
+            phone,
+            fullCode
           );
         } catch (err) {
           alert("Booking unsuccessful. Please try again");

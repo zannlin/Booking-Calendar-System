@@ -6,7 +6,7 @@ const router = express.Router();
 // Create a new booking
 router.post("/", async (req, res) => {
   try {
-    const { code, name, service, date, time, phone } = req.body;
+    const { practitioner, code, name, service, date, time, phone } = req.body;
 
     // Ensure that the 'code' is included and is unique
     const existingBooking = await Booking.findOne({ code });
@@ -19,6 +19,7 @@ router.post("/", async (req, res) => {
     const booking = new Booking({
       code, // Save the custom event ID (code)
       name,
+      practitioner,
       service,
       date,
       time,
