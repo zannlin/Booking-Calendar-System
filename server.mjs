@@ -15,7 +15,7 @@ app.use(express.json());
 const GOOGLE_PRIVATE_KEY = process.env.private_key.replace(/\\n/g, "\n");
 const GOOGLE_CLIENT_EMAIL = process.env.client_email;
 const GOOGLE_PROJECT_NUMBER = process.env.project_number;
-const port = process.env.port || 3000;
+const port = process.env.port || 5000;
 
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar"];
@@ -247,7 +247,6 @@ app.post("/send-whatsapp", async (req, res) => {
 
 
 const mongoURI = process.env.MONGODB_URI;
-console.log(mongoURI); // Add this line for debugging
 
 
 mongoose.connect(mongoURI, {

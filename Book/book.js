@@ -271,7 +271,15 @@ async function fetchEvents(practitioner, minDate, maxDate) {
 }
 
 //function that inserts the event into the google calendar
-async function createEvent(practitioner, summary, start, end, description) {
+async function createEvent(
+  practitioner,
+  summary,
+  start,
+  end,
+  description,
+  name,
+  phone
+) {
   const eventData = {
     practitioner: practitioner,
     summary: summary,
@@ -280,14 +288,36 @@ async function createEvent(practitioner, summary, start, end, description) {
     description: description,
   };
 
+  const bookingData = {
+    name,
+    service: summary,
+    date: start,
+    time: start.split("T")[1], // Extracts time portion from ISO datetime
+    phone,
+  };
+
   try {
     const response = await fetch("http://localhost:5000/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(eventData),
     });
-    const data = await response.json();
-    //console.log("Event Created:", data);
+    const calendarResult  = await response.json();
+    //console.log("Event Created:", calendarResult );
+
+    // Save to MongoDB
+    const bookingResponse = await fetch("http://localhost:5000/api/bookings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bookingData),
+    });
+
+    const bookingResult = await bookingResponse.json();
+
+    console.log("Event created in Google Calendar and booking saved:", {
+      calendar: calendarResult,
+      mongo: bookingResult,
+    });
   } catch (error) {
     console.error("Error creating event:", error);
   }
@@ -333,8 +363,7 @@ async function sendMessage(name, code, number, date) {
 }
 
 function doEverythingElse() {
-
-//#region Section tracker
+  //#region Section tracker
   var selectedPractition = "";
   var sectionCounter = 0;
   const sections = ["cards", "apointType", "calendar", "former"];
@@ -401,31 +430,29 @@ function doEverythingElse() {
       if (selectedSlot) {
         selectedSlot.classList.remove("selected-slot");
       }
-  
+
       // Clear morning slots
       const morn = document.querySelector("#morning");
       if (morn) {
         // Convert children to array to use forEach
-        Array.from(morn.children).forEach(child => {
+        Array.from(morn.children).forEach((child) => {
           child.remove();
         });
       }
-  
+
       // Deselect selected date (if any)
       const selected = document.querySelector(".selected");
       if (selected) {
         selected.classList.remove("selected");
       }
-  
+
       // Initial Render
       updateCalendar();
     }
   }
-  
-
 
   //#endregion
-  
+
   //#region Appointment types
 
   var appointName = "";
@@ -755,7 +782,7 @@ function doEverythingElse() {
             appointName,
             formatedStartDate,
             formatedEndDate,
-            description
+            description, name, phone
           );
         } catch (err) {
           alert("Booking unsuccessful. Please try again");
@@ -765,7 +792,7 @@ function doEverythingElse() {
         let success = checkIfSuccess(fullCode, startD, endD);
         if (success) {
           let date = `${currentDate} at ${startTime}`;
-          let phoneNum = `+27${phone.substring(1,phone.length)}`;
+          let phoneNum = `+27${phone.substring(1, phone.length)}`;
           sendMessage(name, fullCode, phoneNum, date);
         }
       });
