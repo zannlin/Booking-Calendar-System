@@ -278,7 +278,7 @@ async function createEvent(
   end,
   description,
   name,
-  phone
+  phone, code
 ) {
   const eventData = {
     practitioner: practitioner,
@@ -289,6 +289,7 @@ async function createEvent(
   };
 
   const bookingData = {
+    code,
     name,
     service: summary,
     date: start,
@@ -311,7 +312,6 @@ async function createEvent(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(bookingData),
     });
-
     const bookingResult = await bookingResponse.json();
 
     console.log("Event created in Google Calendar and booking saved:", {
@@ -323,18 +323,32 @@ async function createEvent(
   }
 }
 
-//function that deletes an event from the calendar
+//function that deletes an event from the calendar and database
 async function deleteEvent(practitioner, eventId) {
   try {
-    const response = await fetch(
+    // Delete from Google Calendar first
+    const responseGoogle = await fetch(
       `http://localhost:5000/events/${practitioner}/${eventId}`,
       {
         method: "DELETE",
       }
     );
 
-    const data = await response.json();
-    //console.log(data);
+    if (!responseGoogle.ok) {
+      throw new Error("Failed to delete from Google Calendar");
+    }
+
+    // Then delete the booking from MongoDB (using booking ID)
+    const responseMongoDB = await fetch(`http://localhost:5000/api/bookings/${practitioner}/${eventId}`, {
+      method: "DELETE",
+    });
+
+    const data = await responseMongoDB.json();
+    if (!responseMongoDB.ok) {
+      throw new Error("Failed to delete booking from database");
+    }
+
+    console.log("Event and Booking Deleted:", data);
   } catch (error) {
     console.error("Error deleting event:", error);
   }
@@ -782,7 +796,7 @@ function doEverythingElse() {
             appointName,
             formatedStartDate,
             formatedEndDate,
-            description, name, phone
+            description, name, phone, fullCode
           );
         } catch (err) {
           alert("Booking unsuccessful. Please try again");
