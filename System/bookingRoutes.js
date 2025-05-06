@@ -63,7 +63,7 @@ router.delete("/:code", async (req, res) => {
 });
 
 // Clear all bookings (use this for debugging/testing purposes)
-router.delete('/clear', async (req, res) => {
+router.delete("/clear", async (req, res) => {
   try {
     await Booking.deleteMany({});
     res.status(200).json({ message: "All bookings deleted" });
@@ -72,5 +72,55 @@ router.delete('/clear', async (req, res) => {
   }
 });
 
+//#region analytics
+
+// Total bookings per practitioner
+
+router.get("/analytics/by-practitioner", async (req, res) => {
+  try {
+    const data = await Booking.aggregate([
+      { $group: { _id: "$practitioner", total: { $sum: 1 } } },
+    ]);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Bookings per service
+router.get('/analytics/by-service', async (req, res) => {
+  try {
+    const data = await Booking.aggregate([
+      { $group: { _id: '$service', total: { $sum: 1 } } }
+    ]);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Bookings per month (for all practitioners)
+router.get('/analytics/by-month', async (req, res) => {
+  try {
+    const data = await Booking.aggregate([
+      {
+        $group: {
+          _id: { $month: '$date' },
+          total: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { '_id': 1 } // So months appear in order
+      }
+    ]);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
+//#endregion
 
 export default router;
