@@ -324,7 +324,7 @@ async function createEvent(
 }
 
 //function that deletes an event from the calendar and database
-async function deleteEvent(practitioner, eventId) {
+async function deleteEvent(practitioner, eventId, code) {
   try {
     // Delete from Google Calendar first
     const responseGoogle = await fetch(
@@ -339,13 +339,16 @@ async function deleteEvent(practitioner, eventId) {
     }
 
     // Then delete the booking from MongoDB (using booking ID)
-    const responseMongoDB = await fetch(`http://localhost:5000/api/bookings/${practitioner}/${eventId}`, {
+    const responseMongoDB = await fetch(`http://localhost:5000/api/bookings/${code}`, {
       method: "DELETE",
     });
 
     const data = await responseMongoDB.json();
+
     if (!responseMongoDB.ok) {
-      throw new Error("Failed to delete booking from database");
+      // If the response status is not OK, log the error message
+      console.error("Error deleting booking:", data.error || "Unknown error");
+      throw new Error(data.error || "Unknown error");
     }
 
     console.log("Event and Booking Deleted:", data);
@@ -955,7 +958,7 @@ function doEverythingElse() {
       .querySelector("#deletebook")
       .addEventListener("click", async () => {
         if (cBooking.id) {
-          await deleteEvent(practition, cBooking.id);
+          await deleteEvent(practition, cBooking.id, code);
         }
 
         let dates = getDatesFromCode(code);

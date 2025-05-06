@@ -43,35 +43,33 @@ router.get("/", async (req, res) => {
 });
 
 // Delete a booking by custom eventId
-router.delete("/:practitioner/:eventId", async (req, res) => {
-  const { practitioner, eventId } = req.params;
-
+router.delete("/:code", async (req, res) => {
   try {
-    // Find and delete booking in MongoDB
-    const deletedBooking = await Booking.findOneAndDelete({ _id: eventId });
+    const { code } = req.params;
 
-    if (!deletedBooking) {
-      return res.status(404).json({ message: "Booking not found" });
+    // Check if the booking with the provided code exists
+    const booking = await Booking.findOneAndDelete({ code });
+
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" });
     }
 
-    // Now delete the event from Google Calendar
-    await deleteGoogleCalendarEvent(practitioner, eventId); // Assuming this function is already defined for Google Calendar deletion
-
-    res.json({ message: "Event deleted successfully" });
+    res.status(200).json({ message: "Booking deleted successfully" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error deleting event" });
+    console.error("Error deleting booking:", err);
+    res.status(500).json({ error: "Failed to delete booking from database" });
   }
 });
 
 // Clear all bookings (use this for debugging/testing purposes)
-router.delete("/clear", async (req, res) => {
+router.delete('/clear', async (req, res) => {
   try {
-    await Booking.deleteMany({}); // Deletes all bookings
+    await Booking.deleteMany({});
     res.status(200).json({ message: "All bookings deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 export default router;
