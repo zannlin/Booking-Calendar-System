@@ -119,60 +119,80 @@ router.get("/analytics/by-month", async (req, res) => {
   }
 });
 
-// Get busiest days and times
-router.get("/analytics/busiest-days-times", async (req, res) => {
+// Get busiest times
+router.get("/analytics/busiest-timeslots", async (req, res) => {
   try {
     const results = await Booking.aggregate([
       {
-        // Group by the day of the week and the hour from the time field
         $group: {
-          _id: {
-            dayOfWeek: { $dayOfWeek: "$date" }, // Group by day of the week (Sunday to Saturday)
-            hour: { $hour: { $dateFromString: { dateString: "$time" } } }, // Parse the 'time' field as hour
-          },
-          count: { $sum: 1 }, // Count the number of bookings per group
+          _id: "$time", // group by time string
+          count: { $sum: 1 },
         },
+      },
+      {
+        $sort: { count: -1 },
+      },
+      {
+        $limit: 10, // top 10 busiest time slots
       },
       {
         $project: {
-          dayOfWeek: "$_id.dayOfWeek", // Extract the day of the week
-          hour: "$_id.hour", // Extract the hour
-          count: 1, // Include the count
-          _id: 0, // Don't include the default _id field
+          time: "$_id",
+          count: 1,
+          _id: 0,
         },
-      },
-      {
-        $sort: { count: -1 }, // Sort by the highest count first
       },
     ]);
 
     res.json(results);
   } catch (err) {
-    console.error(err);  // Log the error for debugging
+    console.error(err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// In your analytics route (e.g., analyticsRoutes.js or bookings.js)
+router.get("/analytics/busiest-days", async (req, res) => {
+  try {
+    const results = await Booking.aggregate([
+      {
+        $group: {
+          _id: { $dayOfWeek: "$date" }, // 1 = Sunday, 7 = Saturday
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { count: -1 } // Sort by most bookings
+      }
+    ]);
+
+    res.json(results);
+  } catch (err) {
+    console.error("Error fetching busiest days of the week:", err);
+    res.status(500).send("Server error");
   }
 });
 
 
 // Get repeat customers
-router.get('/analytics/repeat-customers', async (req, res) => {
+router.get("/analytics/repeat-customers", async (req, res) => {
   try {
     const results = await Booking.aggregate([
       {
         $group: {
-          _id: '$phone',
-          name: { $first: '$name' },
-          count: { $sum: 1 }
-        }
+          _id: "$phone",
+          name: { $first: "$name" },
+          count: { $sum: 1 },
+        },
       },
       {
         $match: {
-          count: { $gt: 1 } // Only return customers with more than 1 booking
-        }
+          count: { $gt: 1 }, // Only return customers with more than 1 booking
+        },
       },
       {
-        $sort: { count: -1 }
-      }
+        $sort: { count: -1 },
+      },
     ]);
 
     res.json(results);
@@ -182,18 +202,18 @@ router.get('/analytics/repeat-customers', async (req, res) => {
 });
 
 // Get number of bookings per practitioner
-router.get('/analytics/bookings-per-practitioner', async (req, res) => {
+router.get("/analytics/bookings-per-practitioner", async (req, res) => {
   try {
     const results = await Booking.aggregate([
       {
         $group: {
-          _id: '$practitioner',
-          count: { $sum: 1 }
-        }
+          _id: "$practitioner",
+          count: { $sum: 1 },
+        },
       },
       {
-        $sort: { count: -1 }
-      }
+        $sort: { count: -1 },
+      },
     ]);
 
     res.json(results);

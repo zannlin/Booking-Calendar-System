@@ -40,56 +40,34 @@ async function loadTopMetrics() {
   document.getElementById("topService").textContent = topService;
 }
 
-// === 2. Chart: Busiest Times ===
-async function loadBusiestTimesChart() {
+async function loadBusiestTimeslotsChart() {
   const data = await fetchData(
-    "http://localhost:5000/api/bookings/analytics/busiest-days-times"
+    "http://localhost:5000/api/bookings/analytics/busiest-timeslots"
   );
 
-  // Map the dayOfWeek to its string representation (Sun, Mon, etc.)
-  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  if (!Array.isArray(data)) {
+    console.error("Invalid data format:", data);
+    return;
+  }
 
-  // Map the data to create labels in the format "Day X, Hour: 00"
-  const labels = data.map(
-    (item) => `${daysOfWeek[item.dayOfWeek - 1]}, ${item.hour}:00`
-  );
+  const labels = data.map((item) => item.time.split("+")[0].slice(0, 5));
+  const counts = data.map((item) => item.count); // e.g., 5 bookings
 
-  // Extract the counts for each day/time combination
-  const counts = data.map((item) => item.count);
-
-  console.log("Busiest Times Raw Data:", data);
-
-  // Create the chart
-  new Chart(document.getElementById("busiestTimesChart"), {
+  new Chart(document.getElementById("busiestTimeslotsChart"), {
     type: "bar",
     data: {
       labels,
       datasets: [
         {
-          label: "Bookings",
+          label: "Bookings per Time Slot",
           data: counts,
-          backgroundColor: "rgba(54, 162, 235, 0.6)", // Blue color for the bars
+          backgroundColor: "rgba(75, 192, 192, 0.6)",
         },
       ],
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false, // Ensures chart adapts to container size
-      aspectRatio: 1, // Optional: Specific aspect ratio
-      scales: {
-        x: {
-          title: {
-            display: true,
-            text: "Day of Week and Hour", // X-axis label
-          },
-        },
-        y: {
-          title: {
-            display: true,
-            text: "Booking Count", // Y-axis label
-          },
-        },
-      },
+      maintainAspectRatio: false,
     },
   });
 }
@@ -149,10 +127,8 @@ function showInsights() {
 }
 
 async function generateAutomatedInsights() {
-  const [busiest, services, repeatCustomers, allBookings] = await Promise.all([
-    fetchData(
-      "http://localhost:5000/api/bookings/analytics/busiest-days-times"
-    ),
+  const [busiestTimes, services, repeatCustomers, allBookings] = await Promise.all([
+    fetchData("http://localhost:5000/api/bookings/analytics/busiest-timeslots"),
     fetchData("http://localhost:5000/api/bookings/analytics/by-service"),
     fetchData("http://localhost:5000/api/bookings/analytics/repeat-customers"),
     fetchData("http://localhost:5000/api/bookings"),
@@ -160,29 +136,30 @@ async function generateAutomatedInsights() {
 
   const insights = [];
 
-  // Most common day/time
-  if (busiest.length) {
-    const { dayOfWeek, hour } = busiest[0];
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    insights.push(
-      `📈 Peak booking time is ${days[dayOfWeek % 7]} at ${hour}:00.`
-    );
+  // Peak time slot
+  if (busiestTimes.length && busiestTimes[0].time) {
+    const topTime = busiestTimes[0].time.split("+")[0].slice(0, 5); // Clean "HH:MM"
+    insights.push(`⏰ Most popular booking time is ${topTime}.`);
+
+    // Optional: show next top slots
+    if (busiestTimes.length >= 3) {
+      const nextTop = busiestTimes.slice(1, 3)
+        .map(item => item.time.split("+")[0].slice(0, 5))
+        .join(" and ");
+      insights.push(`📅 Other busy slots: ${nextTop}.`);
+    }
   }
 
   // Dominant service
   const totalServices = services.reduce((sum, s) => sum + s.total, 0);
   if (services[0] && services[0].total / totalServices > 0.5) {
-    insights.push(
-      `🔥 ${services[0]._id} is currently trending (over 50% of bookings).`
-    );
+    insights.push(`🔥 ${services[0]._id} is currently trending (over 50% of bookings).`);
   }
 
   // Repeat customer ratio
   const repeatRatio = (repeatCustomers.length / allBookings.length) * 100;
   if (repeatRatio > 30) {
-    insights.push(
-      `🔁 ${repeatRatio.toFixed(1)}% of bookings are from repeat customers.`
-    );
+    insights.push(`🔁 ${repeatRatio.toFixed(1)}% of bookings are from repeat customers.`);
   }
 
   // Booking growth comparison
@@ -208,10 +185,46 @@ async function generateAutomatedInsights() {
   document.getElementById("insightText").innerHTML = insights.join("<br>");
 }
 
+async function loadBusiestDaysChart() {
+  const data = await fetchData("http://localhost:5000/api/bookings/analytics/busiest-days");
+  
+  // Day name mapping (MongoDB: 1 = Sun, 7 = Sat)
+  const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  
+  const labels = data.map(item => dayLabels[item._id - 1]); // _id is day number
+  const counts = data.map(item => item.count);
+
+  new Chart(document.getElementById("busiestDaysChart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Bookings",
+          data: counts,
+          backgroundColor: "rgba(255, 99, 132, 0.6)",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: "Busiest Days of the Week"
+        },
+      },
+    },
+  });
+}
+
+
 // === INIT ===
 loadTopMetrics();
-//loadBusiestTimesChart();
 loadPractitionerChart();
 loadRecentBookings();
 showInsights();
+loadBusiestTimeslotsChart();
+loadBusiestDaysChart();
 generateAutomatedInsights();
