@@ -187,7 +187,7 @@ function setUpCards() {
     imageBox.classList = "col-4";
     let image = document.createElement("img");
     image.classList = "img-fluid rounded-start h-100";
-    image.src = `../Images/${practition.name.toLowerCase()}.jpg`;
+    image.src = `/Images/${practition.name.toLowerCase()}.jpg`;
     image.alt = practition.name;
     image.style.objectFit = "cover";
     imageBox.appendChild(image);

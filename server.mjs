@@ -38,6 +38,21 @@ const auth = new google.auth.GoogleAuth({
   scopes: SCOPES,
 });
 
+app.set("view engine", "ejs");
+app.use(express.static('public'));
+
+app.get("/" , (req, res) => {
+  res.render("book");
+});
+
+app.get("/cancelations" , (req, res) => {
+  res.render("cancel");
+});
+
+app.get("/dashboard" , (req, res) => {
+  res.render("dashboard");
+});
+
 app.get("/events", async (req, res) => {
   try {
     const { practitioner, minDate, maxDate } = req.query;
