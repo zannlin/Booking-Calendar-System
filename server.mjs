@@ -261,10 +261,10 @@ app.post("/send-whatsapp", async (req, res) => {
 });
 
 
-const mongoURI = process.env.MONGODB_URI;
+const mongoURL = process.env.MONGODB_URI;
 
 
-mongoose.connect(mongoURI, {
+mongoose.connect(mongoURL, {
   serverSelectionTimeoutMS: 5000,  // Timeout value can still be useful
   connectTimeoutMS: 10000
 })

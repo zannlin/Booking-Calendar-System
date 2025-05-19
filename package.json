@@ -2,12 +2,12 @@
   "name": "booking-calendar-system",
   "version": "1.0.0",
   "description": "Creating a booking appointment system",
-  "main": "server.js",
+  "main": "server.mjs",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
-    "forest": "nodemon server.js"
+    "start": "node server.mjs",
+    "forest": "nodemon server.mjs"
   },
   "repository": {
     "type": "git",
@@ -22,8 +22,10 @@
   "dependencies": {
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
+    "googleapis": "^148.0.0",
     "mongodb": "^6.16.0",
     "mongoose": "^8.14.1",
     "nodemon": "^3.1.10"
