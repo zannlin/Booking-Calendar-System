@@ -1,12 +1,57 @@
 import express from "express";
-import Booking from "./Booking.js";
+import Booking from "../modules/Booking.js";
 
 const router = express.Router();
+
+// Get all bookings
+router.get("/", async (req, res) => {
+  const { practitioner, minDate, maxDate } = req.query;
+
+  const query = {};
+
+  if (practitioner) {
+    query.practitioner = practitioner;
+  }
+
+  if (minDate && maxDate) {
+    const start = new Date(minDate);
+    const end = new Date(maxDate);
+
+    // Only add the filter if both dates are valid
+    if (!isNaN(start) && !isNaN(end)) {
+      query.startTime = { $gte: start, $lte: end };
+    } else {
+      return res.status(400).json({ error: "Invalid minDate or maxDate" });
+    }
+  }
+
+  try {
+    const bookings = await Booking.find(query).sort({ startTime: 1 });
+    res.json(bookings);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Failed to fetch bookings", details: err.message });
+  }
+});
 
 // Create a new booking
 router.post("/", async (req, res) => {
   try {
-    const { practitioner, code, name, service, date, time, phone } = req.body;
+    const { practitioner, code, name, service, startTime, endTime, phone } =
+      req.body;
+
+    if (
+      !code ||
+      !name ||
+      !practitioner ||
+      !service ||
+      !startTime ||
+      !endTime ||
+      !phone
+    ) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
 
     // Ensure that the 'code' is included and is unique
     const existingBooking = await Booking.findOne({ code });
@@ -21,25 +66,17 @@ router.post("/", async (req, res) => {
       name,
       practitioner,
       service,
-      date,
-      time,
+      startTime: new Date(startTime),
+      endTime: new Date(endTime),
       phone,
     });
 
     await booking.save();
-    res.status(201).json(booking);
+    res.status(200).json({ message: "Booking created", booking: booking });
   } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-// Get all bookings
-router.get("/", async (req, res) => {
-  try {
-    const bookings = await Booking.find();
-    res.json(bookings);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to create booking", details: err.message });
   }
 });
 
@@ -63,7 +100,7 @@ router.delete("/:code", async (req, res) => {
 });
 
 // Clear all bookings (use this for debugging/testing purposes)
-router.delete("/clear", async (req, res) => {
+router.delete("/byeHaveaGreateTime", async (req, res) => {
   try {
     await Booking.deleteMany({});
     res.status(200).json({ message: "All bookings deleted" });
@@ -158,12 +195,12 @@ router.get("/analytics/busiest-days", async (req, res) => {
       {
         $group: {
           _id: { $dayOfWeek: "$date" }, // 1 = Sunday, 7 = Saturday
-          count: { $sum: 1 }
-        }
+          count: { $sum: 1 },
+        },
       },
       {
-        $sort: { count: -1 } // Sort by most bookings
-      }
+        $sort: { count: -1 }, // Sort by most bookings
+      },
     ]);
 
     res.json(results);
@@ -172,7 +209,6 @@ router.get("/analytics/busiest-days", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
 
 // Get repeat customers
 router.get("/analytics/repeat-customers", async (req, res) => {

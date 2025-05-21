@@ -234,37 +234,37 @@ function setUpCards() {
 }
 
 //constructor function
-function Booking(type, startTime, endTime, description, id) {
-  this.type = type;
-  this.startTime = startTime;
-  this.endTime = endTime;
-  this.description = description;
-  this.id = id;
+class Booking {
+  constructor(name, startTime, endTime, service, code) {
+    this.name = name;
+    this.startTime = startTime;
+    this.endTime = endTime;
+    this.service = service;
+    this.code = code;
+  }
 }
 
 //function that gets the calendar events from the server
 async function fetchEvents(practitioner, minDate, maxDate) {
   bookings = [];
+  console.log(`MinDate: ${minDate}, MaxDate: ${maxDate}`);
   try {
     const response = await fetch(
-      `http://localhost:5000/events?practitioner=${practitioner}&minDate=${minDate}&maxDate=${maxDate}`
+      `http://localhost:5000/api/bookings?practitioner=${practitioner}&minDate=${minDate}&maxDate=${maxDate}`
     );
     const events = await response.json();
-    //console.log("Upcoming Events:", events);
 
     events.forEach((event) => {
-      const startTime = event.start.dateTime || event.start.date; // Date or DateTime
-      const endTime = event.end.dateTime || event.end.date; // Date or DateTime
-
-      var Appointment = new Booking(
-        event.summary,
-        startTime,
-        endTime,
-        event.description,
-        event.id
+      var appointment = new Booking(
+        event.name,
+        event.startTime,
+        event.endTime,
+        event.service,
+        event.code
       );
-      bookings.push(Appointment);
+      bookings.push(appointment);
     });
+    //console.log(bookings);
   } catch (error) {
     console.error("Error fetching events:", error);
   }
@@ -273,42 +273,26 @@ async function fetchEvents(practitioner, minDate, maxDate) {
 //function that inserts the event into the google calendar
 async function createEvent(
   practitioner,
-  summary,
-  start,
-  end,
-  description,
+  service,
+  startTime,
+  endTime,
   name,
   phone,
   code
 ) {
-  const eventData = {
-    practitioner: practitioner,
-    summary: summary,
-    startTime: start,
-    endTime: end,
-    description: description,
-  };
-
   const bookingData = {
     code,
     name,
     practitioner,
-    service: summary,
-    date: start,
-    time: start.split("T")[1], // Extracts time portion from ISO datetime
+    service,
+    startTime,
+    endTime,
     phone,
   };
 
-  try {
-    const response = await fetch("http://localhost:5000/events", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(eventData),
-    });
-    const calendarResult = await response.json();
-    //console.log("Event Created:", calendarResult );
+  console.log("Booking data:", bookingData);
 
-    // Save to MongoDB
+  try {
     const bookingResponse = await fetch("http://localhost:5000/api/bookings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -317,52 +301,39 @@ async function createEvent(
     const bookingResult = await bookingResponse.json();
 
     if (bookingResponse.ok) {
-      console.log("Event created in Google Calendar and booking saved:", {
-        calendar: calendarResult,
-        mongo: bookingResult,
+      console.log("Event created and booking saved:", {
+        mongoBooking: bookingResult,
       });
     } else {
-      console.error("Failed to save booking to MongoDB:", bookingResult);
+      console.error(
+        "Failed to save data:",
+        bookingResult.error || bookingResult
+      );
     }
   } catch (error) {
     console.error("Error creating event:", error);
   }
 }
 
-//function that deletes an event from the calendar and database
-async function deleteEvent(practitioner, eventId, code) {
+//function that deletes an event from the database
+async function deleteEvent(bookingId) {
   try {
-    // Delete from Google Calendar first
-    const responseGoogle = await fetch(
-      `http://localhost:5000/events/${practitioner}/${eventId}`,
+    const response = await fetch(
+      `http://localhost:5000/api/bookings/${bookingId}`,
       {
         method: "DELETE",
       }
     );
 
-    if (!responseGoogle.ok) {
-      throw new Error("Failed to delete from Google Calendar");
+    const result = await response.json();
+
+    if (response.ok) {
+      console.log("Booking successfully deleted:", result);
+    } else {
+      console.error("Failed to delete booking:", result.error || result);
     }
-
-    // Then delete the booking from MongoDB (using booking ID)
-    const responseMongoDB = await fetch(
-      `http://localhost:5000/api/bookings/${code}`,
-      {
-        method: "DELETE",
-      }
-    );
-
-    const data = await responseMongoDB.json();
-
-    if (!responseMongoDB.ok) {
-      // If the response status is not OK, log the error message
-      console.error("Error deleting booking:", data.error || "Unknown error");
-      throw new Error(data.error || "Unknown error");
-    }
-
-    console.log("Event and Booking Deleted:", data);
   } catch (error) {
-    console.error("Error deleting event:", error);
+    console.error("Error deleting booking:", error);
   }
 }
 
@@ -565,16 +536,38 @@ function doEverythingElse() {
     });
   }
 
+  function toLocalISOStringWithOffset(date, offsetMinutes) {
+    const tzOffset = offsetMinutes ?? date.getTimezoneOffset(); // in minutes
+    const localDate = new Date(date.getTime() - tzOffset * 60000);
+
+    const year = localDate.getFullYear();
+    const month = String(localDate.getMonth() + 1).padStart(2, "0");
+    const day = String(localDate.getDate()).padStart(2, "0");
+    const hours = String(localDate.getHours()).padStart(2, "0");
+    const minutes = String(localDate.getMinutes()).padStart(2, "0");
+    const seconds = String(localDate.getSeconds()).padStart(2, "0");
+
+    const sign = tzOffset > 0 ? "-" : "+";
+    const absOffset = Math.abs(tzOffset);
+    const offsetHours = String(Math.floor(absOffset / 60)).padStart(2, "0");
+    const offsetMins = String(absOffset % 60).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${sign}${offsetHours}:${offsetMins}`;
+  }
+
   function getSlots(date, bookings, slotsWithAvailability, duration) {
     const availableStartTimes = [];
 
     // Mark the booked slots as unavailable
     bookings.forEach((booking) => {
-      const bookingDate = booking.startTime.split("T")[0]; // Extract YYYY-MM-DD
+      const bookingStart = new Date(booking.startTime);
+      const bookingEnd = new Date(booking.endTime);
+      const bookingDate = bookingStart.toISOString().split("T")[0]; // Extract YYYY-MM-DD
 
       if (bookingDate === date) {
-        let startTime = booking.startTime.split("T")[1].substring(0, 5); // Get HH:mm
-        let endTime = booking.endTime.split("T")[1].substring(0, 5); // Get HH:mm
+        let startTime = `${bookingStart.getHours().toString().padStart(2, '0')}:${bookingStart.getMinutes().toString().padStart(2, '0')}`;
+        let endTime = `${bookingEnd.getHours().toString().padStart(2, '0')}:${bookingEnd.getMinutes().toString().padStart(2, '0')}`;
+
 
         let currentSlot = startTime;
         while (currentSlot < endTime) {
@@ -800,15 +793,12 @@ function doEverythingElse() {
           8,
           10
         )}${startTime.substring(0, 2)}${startTime.substring(3, 5)}`;
-
-        let description = `${fullCode}  Name: ${name}  Phone: ${phone}`;
         try {
           await createEvent(
             selectedPractition,
             appointName,
             formatedStartDate,
             formatedEndDate,
-            description,
             name,
             phone,
             fullCode
@@ -818,7 +808,11 @@ function doEverythingElse() {
           console.error(err);
         }
 
-        let success = checkIfSuccess(fullCode, startD, endD);
+        let success = await checkIfSuccess(
+          fullCode,
+          formatedStartDate,
+          formatedEndDate
+        );
         if (success) {
           let date = `${currentDate} at ${startTime}`;
           let phoneNum = `+27${phone.substring(1, phone.length)}`;
@@ -827,12 +821,13 @@ function doEverythingElse() {
       });
 
     async function checkIfSuccess(fullCode, start, end) {
-      await fetchEvents(selectedPractition, start, end);
+      let dayStart = `${currentDate}T00:00:00.000Z`;
+      let dayEnd = `${currentDate}T23:59:59.999Z`;
+      await fetchEvents(selectedPractition, dayStart, dayEnd);
 
       var successful = false;
       bookings.forEach((booking) => {
-        let descrip = booking.description;
-        let checkCode = descrip.substring(0, 13);
+        let checkCode = booking.code;
 
         if (fullCode == checkCode) {
           successful = true;
@@ -867,9 +862,6 @@ function doEverythingElse() {
         area.innerText = "Booking was unsuccessful";
         area.classList.remove("hiding");
         area.classList.add("unsuccess");
-        let button = document.querySelector(".after");
-        button.classList.remove("hiding");
-        button.innerText = "Try again";
         return false;
       }
     }
