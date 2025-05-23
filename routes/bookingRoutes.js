@@ -142,7 +142,7 @@ router.get("/analytics/by-month", async (req, res) => {
     const data = await Booking.aggregate([
       {
         $group: {
-          _id: { $month: "$date" },
+          _id: { $month: "$startTime" },
           total: { $sum: 1 },
         },
       },
@@ -161,17 +161,24 @@ router.get("/analytics/busiest-timeslots", async (req, res) => {
   try {
     const results = await Booking.aggregate([
       {
-        $group: {
-          _id: "$time", // group by time string
-          count: { $sum: 1 },
+        $project: {
+          time: {
+            $dateToString: {
+              format: "%H:%M",
+              date: "$startTime",
+              timezone: "Africa/Johannesburg", // Adjust for your timezone
+            },
+          },
         },
       },
       {
-        $sort: { count: -1 },
+        $group: {
+          _id: "$time",
+          count: { $sum: 1 },
+        },
       },
-      {
-        $limit: 10, // top 10 busiest time slots
-      },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
       {
         $project: {
           time: "$_id",
@@ -183,7 +190,7 @@ router.get("/analytics/busiest-timeslots", async (req, res) => {
 
     res.json(results);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching busiest time slots:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -194,7 +201,7 @@ router.get("/analytics/busiest-days", async (req, res) => {
     const results = await Booking.aggregate([
       {
         $group: {
-          _id: { $dayOfWeek: "$date" }, // 1 = Sunday, 7 = Saturday
+          _id: { $dayOfWeek: "$startTime" }, // 1 = Sunday, 7 = Saturday
           count: { $sum: 1 },
         },
       },

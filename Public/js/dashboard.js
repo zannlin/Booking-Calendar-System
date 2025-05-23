@@ -1,3 +1,16 @@
+function parseDateWithOffset(isoString) {
+  if (!isoString || typeof isoString !== "string") {
+    console.error("Invalid date (missing or not a string):", isoString);
+    return null;
+  }
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) {
+    console.error("Invalid date (could not parse):", isoString);
+    return null;
+  }
+  return date;
+}
+
 // === Utility Fetch Function ===
 async function fetchData(url) {
   const res = await fetch(url);
@@ -13,10 +26,17 @@ async function loadTopMetrics() {
   ]);
 
   // Total bookings this month
-  const currentMonth = new Date().getMonth();
-  const thisMonthBookings = allBookings.filter(
-    (b) => new Date(b.date).getMonth() === currentMonth
-  );
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const thisMonthBookings = allBookings.filter((b) => {
+    const d = parseDateWithOffset(b.startTime);
+    return (
+      d && d.getMonth() === currentMonth && d.getFullYear() === currentYear
+    );
+  });
+
   document.getElementById("totalBookings").textContent =
     thisMonthBookings.length;
 
@@ -25,11 +45,16 @@ async function loadTopMetrics() {
     repeatCustomers.length;
 
   // Average lead time
-  const leadTimes = allBookings.map((b) => {
-    const bookingDate = new Date(b.date);
-    const createdDate = new Date(b.createdAt || bookingDate); // fallback
-    return (bookingDate - createdDate) / (1000 * 60 * 60 * 24); // days
-  });
+  const leadTimes = allBookings
+    .map((b) => {
+      const bookingDate = parseDateWithOffset(b.startTime);
+      const createdDate = parseDateWithOffset(b.createdAt) || bookingDate;
+      if (!bookingDate || !createdDate) return null;
+
+      return (bookingDate - createdDate) / (1000 * 60 * 60 * 24); // days
+    })
+    .filter((x) => x !== null); // remove bad entries
+
   const avgLeadTime = leadTimes.length
     ? (leadTimes.reduce((a, b) => a + b, 0) / leadTimes.length).toFixed(1)
     : "-";
@@ -50,7 +75,9 @@ async function loadBusiestTimeslotsChart() {
     return;
   }
 
-  const labels = data.map((item) => item.time.split("+")[0].slice(0, 5));
+  const labels = data.map((d) => d.time); // ← Label (e.g., "08:00", "10:30")
+  const values = data.map((d) => d.count); // ← Booking count
+
   const counts = data.map((item) => item.count); // e.g., 5 bookings
 
   new Chart(document.getElementById("busiestTimeslotsChart"), {
@@ -111,11 +138,12 @@ async function loadRecentBookings() {
   list.innerHTML = "";
 
   recent.forEach((b) => {
+    const d = parseDateWithOffset(b.startTime);
     const li = document.createElement("li");
     li.className = "list-group-item";
-    li.textContent = `${b.name} - ${b.service} (${new Date(
-      b.date
-    ).toLocaleString()})`;
+    li.textContent = `${b.name} - ${b.service} (${
+      d ? d.toLocaleString() : "Unknown date"
+    })`;
     list.appendChild(li);
   });
 }
@@ -127,55 +155,66 @@ function showInsights() {
 }
 
 async function generateAutomatedInsights() {
-  const [busiestTimes, services, repeatCustomers, allBookings] = await Promise.all([
-    fetchData("http://localhost:5000/api/bookings/analytics/busiest-timeslots"),
-    fetchData("http://localhost:5000/api/bookings/analytics/by-service"),
-    fetchData("http://localhost:5000/api/bookings/analytics/repeat-customers"),
-    fetchData("http://localhost:5000/api/bookings"),
-  ]);
+  const [busiestTimes, services, repeatCustomers, allBookings] =
+    await Promise.all([
+      fetchData(
+        "http://localhost:5000/api/bookings/analytics/busiest-timeslots"
+      ),
+      fetchData("http://localhost:5000/api/bookings/analytics/by-service"),
+      fetchData(
+        "http://localhost:5000/api/bookings/analytics/repeat-customers"
+      ),
+      fetchData("http://localhost:5000/api/bookings"),
+    ]);
 
   const insights = [];
 
-  // Peak time slot
   if (busiestTimes.length && busiestTimes[0].time) {
-    const topTime = busiestTimes[0].time.split("+")[0].slice(0, 5); // Clean "HH:MM"
+    const topTime = busiestTimes[0].time.split("+")[0].slice(0, 5);
     insights.push(`⏰ Most popular booking time is ${topTime}.`);
 
-    // Optional: show next top slots
     if (busiestTimes.length >= 3) {
-      const nextTop = busiestTimes.slice(1, 3)
-        .map(item => item.time.split("+")[0].slice(0, 5))
+      const nextTop = busiestTimes
+        .slice(1, 3)
+        .map((item) => item.time.split("+")[0].slice(0, 5))
         .join(" and ");
       insights.push(`📅 Other busy slots: ${nextTop}.`);
     }
   }
 
-  // Dominant service
   const totalServices = services.reduce((sum, s) => sum + s.total, 0);
   if (services[0] && services[0].total / totalServices > 0.5) {
-    insights.push(`🔥 ${services[0]._id} is currently trending (over 50% of bookings).`);
+    insights.push(
+      `🔥 ${services[0]._id} is currently trending (over 50% of bookings).`
+    );
   }
 
-  // Repeat customer ratio
   const repeatRatio = (repeatCustomers.length / allBookings.length) * 100;
   if (repeatRatio > 30) {
-    insights.push(`🔁 ${repeatRatio.toFixed(1)}% of bookings are from repeat customers.`);
+    insights.push(
+      `🔁 ${repeatRatio.toFixed(1)}% of bookings are from repeat customers.`
+    );
   }
 
-  // Booking growth comparison
   const now = new Date();
-  const month = now.getMonth();
-  const year = now.getFullYear();
-  const thisMonth = allBookings.filter(
-    (b) =>
-      new Date(b.date).getMonth() === month &&
-      new Date(b.date).getFullYear() === year
-  );
-  const lastMonth = allBookings.filter(
-    (b) =>
-      new Date(b.date).getMonth() === month - 1 &&
-      new Date(b.date).getFullYear() === year
-  );
+  const thisMonth = allBookings.filter((b) => {
+    const d = parseDateWithOffset(b.startTime);
+    return (
+      d &&
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear()
+    );
+  });
+
+  const lastMonth = allBookings.filter((b) => {
+    const d = parseDateWithOffset(b.startTime);
+    return (
+      d &&
+      d.getMonth() === now.getMonth() - 1 &&
+      d.getFullYear() === now.getFullYear()
+    );
+  });
+
   if (lastMonth.length && thisMonth.length > lastMonth.length) {
     const growth =
       ((thisMonth.length - lastMonth.length) / lastMonth.length) * 100;
@@ -186,13 +225,21 @@ async function generateAutomatedInsights() {
 }
 
 async function loadBusiestDaysChart() {
-  const data = await fetchData("http://localhost:5000/api/bookings/analytics/busiest-days");
-  
+  const data = await fetchData(
+    "http://localhost:5000/api/bookings/analytics/busiest-days"
+  );
+
   // Day name mapping (MongoDB: 1 = Sun, 7 = Sat)
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  
-  const labels = data.map(item => dayLabels[item._id - 1]); // _id is day number
-  const counts = data.map(item => item.count);
+
+  const labels = data.map((item) => dayLabels[item._id - 1] || "Unknown"); // _id is day number
+  const counts = data.map((item) => item.count);
+
+  data.forEach((item) => {
+    if (!item._id || item._id < 1 || item._id > 7) {
+      console.warn("Invalid day index:", item._id);
+    }
+  });
 
   new Chart(document.getElementById("busiestDaysChart"), {
     type: "bar",
@@ -212,13 +259,12 @@ async function loadBusiestDaysChart() {
       plugins: {
         title: {
           display: true,
-          text: "Busiest Days of the Week"
+          text: "Busiest Days of the Week",
         },
       },
     },
   });
 }
-
 
 // === INIT ===
 loadTopMetrics();
