@@ -2,17 +2,27 @@ import express from "express";
 import { google } from "googleapis";
 import cors from "cors";
 import dotenv from "dotenv";
-import fetch from "node-fetch";
 import mongoose from "mongoose";
 import bookingRoutes from "./routes/bookingRoutes.js";
+import navRoutes from "./routes/navRoutes.js";
+//import employeeRoutes from "./routes/employeeRoutes.js";
+import whatsAppRoutes from "./routes/whatsAppRoutes.js";
 
 dotenv.config(); // Load environment variables
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+// Add routes
+app.use("/", navRoutes);
+app.use("/api/bookings", bookingRoutes);
+//app.use("/api/employees", employeeRoutes);
+app.use("/api/whatsapp", whatsAppRoutes);
+app.set("view engine", "ejs");
+app.use(express.static("public"));
 
-const port = process.env.port || 5000;
+const port = process.env.PORT || 5000;
+const host = process.env.HOST || "localhost";
 const mongoURL = process.env.MONGODB_URI;
 
 mongoose
@@ -22,24 +32,6 @@ mongoose
   })
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
-
-// Add routes
-app.use("/api/bookings", bookingRoutes);
-
-app.set("view engine", "ejs");
-app.use(express.static("public"));
-
-app.get("/", (req, res) => {
-  res.render("book");
-});
-
-app.get("/cancelations", (req, res) => {
-  res.render("cancel");
-});
-
-app.get("/dashboard", (req, res) => {
-  res.render("dashboard");
-});
 
 //#region Google Calendar API
 
@@ -66,9 +58,6 @@ const auth = new google.auth.GoogleAuth({
   keyFile: "./keys.json",
   scopes: SCOPES,
 });
-
-
-
 
 // app.get("/events", async (req, res) => {
 //   try {
@@ -214,71 +203,6 @@ const auth = new google.auth.GoogleAuth({
 
 //#endregion
 
-app.post("/send-whatsapp", async (req, res) => {
-  const { phoneNumber, bookingCode, name, date } = req.body;
-
-  if (!phoneNumber || !bookingCode || !name || !date) {
-    return res.status(400).json({
-      error: "Missing required fields",
-      required: ["phoneNumber", "bookingCode", "name", "date"],
-    });
-  }
-
-  const url = `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-  const token = process.env.WHATSAPP_ACCESS_TOKEN;
-
-  if (!process.env.WHATSAPP_PHONE_NUMBER_ID || !token) {
-    console.error("Missing environment variables:", {
-      phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID,
-      token: !!token, // Log true/false to avoid logging the actual token
-    });
-    return res.status(500).json({ error: "Server configuration error" });
-  }
-
-  const messageData = {
-    messaging_product: "whatsapp",
-    to: phoneNumber,
-    type: "text",
-    text: {
-      body: `Hello ${name}, your appointment has been made for ${date}.\nYour booking code is: ${bookingCode}. Use this if you would like to cancel your appointment.`,
-    },
-  };
-
-  try {
-    console.log("Sending WhatsApp message with data:", messageData);
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(messageData),
-    });
-
-    const data = await response.json();
-    console.log("WhatsApp API response:", data);
-
-    if (!response.ok || data.error) {
-      console.error("WhatsApp API error:", data.error);
-      return res.status(500).json({
-        error: "Failed to send WhatsApp message",
-        details: data.error?.message || "Unknown error",
-      });
-    }
-
-    res.json({
-      message: "WhatsApp message sent successfully",
-      messageId: data.messages?.[0]?.id,
-    });
-  } catch (error) {
-    console.error("Error in WhatsApp request:", error.message);
-    res.status(500).json({
-      error: "Error sending message",
-      details: error.message,
-    });
-  }
-});
-
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
+app.listen(port, host, () => {
+  console.log(`Server is running at http://${host}:${port}`);
 });
