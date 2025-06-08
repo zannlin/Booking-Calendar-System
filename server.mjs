@@ -5,8 +5,9 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import navRoutes from "./routes/navRoutes.js";
-//import employeeRoutes from "./routes/employeeRoutes.js";
+import employeeRoutes from "./routes/employeeRoutes.js";
 import whatsAppRoutes from "./routes/whatsAppRoutes.js";
+import appointmentRoutes from "./routes/appointmentRoutes.js";
 
 dotenv.config(); // Load environment variables
 
@@ -16,7 +17,8 @@ app.use(express.json());
 // Add routes
 app.use("/", navRoutes);
 app.use("/api/bookings", bookingRoutes);
-//app.use("/api/employees", employeeRoutes);
+app.use("/api/employees", employeeRoutes);
+app.use("/api/appointments", appointmentRoutes);
 app.use("/api/whatsapp", whatsAppRoutes);
 app.set("view engine", "ejs");
 app.use(express.static("public"));
