@@ -21,216 +21,115 @@ const timeSlots = [
 ];
 const timeOff = "tmo";
 const appointmentTypes = [
-  { type: "Haircut", duration: 30, practition: "hairStylist", code: "hrc" },
+  { type: "Haircut", duration: 30, practition: "Hair Stylist", code: "hrc" },
   {
     type: "Hair Wash & Blow Dry",
     duration: 45,
-    practition: "hairStylist",
+    practition: "Hair Stylist",
     code: "hwb",
   },
   {
     type: "Hair Coloring",
     duration: 90,
-    practition: "hairStylist",
+    practition: "Hair Stylist",
     code: "hcl",
   },
   {
     type: "Hair Styling",
     duration: 60,
-    practition: "hairStylist",
+    practition: "Hair Stylist",
     code: "hst",
   },
   {
     type: "Keratin Treatment",
     duration: 120,
-    practition: "hairStylist",
+    practition: "Hair Stylist",
     code: "krt",
   },
   {
     type: "Hair Extensions",
     duration: 150,
-    practition: "hairStylist",
+    practition: "Hair Stylist",
     code: "hex",
   },
   {
     type: "Basic Facial",
     duration: 45,
-    practition: "esthetician",
+    practition: "Esthetician",
     code: "bfc",
   },
   {
     type: "Deep Cleansing Facial",
     duration: 60,
-    practition: "esthetician",
+    practition: "Esthetician",
     code: "dcf",
   },
   {
     type: "Chemical Peel",
     duration: 30,
-    practition: "esthetician",
+    practition: "Esthetician",
     code: "chp",
   },
   {
     type: "Microdermabrasion",
     duration: 60,
-    practition: "esthetician",
+    practition: "Esthetician",
     code: "mdb",
   },
   {
     type: "Acne Treatment",
     duration: 75,
-    practition: "esthetician",
+    practition: "Esthetician",
     code: "act",
   },
   {
     type: "Anti-Aging Facial",
     duration: 90,
-    practition: "esthetician",
+    practition: "Esthetician",
     code: "aaf",
   },
   {
     type: "Basic Manicure",
     duration: 30,
-    practition: "nailTechnician",
+    practition: "Nail Technician",
     code: "bmc",
   },
   {
     type: "Gel Manicure",
     duration: 45,
-    practition: "nailTechnician",
+    practition: "Nail Technician",
     code: "gmc",
   },
   {
     type: "Acrylic Nails Full Set",
     duration: 90,
-    practition: "nailTechnician",
+    practition: "Nail Technician",
     code: "anf",
   },
   {
     type: "Nail Art Design",
     duration: 60,
-    practition: "nailTechnician",
+    practition: "Nail Technician",
     code: "nad",
   },
-  { type: "Pedicure", duration: 45, practition: "nailTechnician", code: "pdc" },
+  {
+    type: "Pedicure",
+    duration: 45,
+    practition: "Nail Technician",
+    code: "pdc",
+  },
   {
     type: "Gel Removal & Reapply",
     duration: 60,
-    practition: "nailTechnician",
+    practition: "Nail Technician",
     code: "gra",
   },
 ];
 
-//#region Dynamic values
-const practitioners = [
-  {
-    name: "Repunzel",
-    practition: "Hair Stylist",
-    description: "Does hair",
-    id: "hairStylist",
-  },
-  {
-    name: "Anna",
-    practition: "Esthetician",
-    description: "Beauty Specialist",
-    id: "esthetician",
-  },
-  {
-    name: "Tiana",
-    practition: "Nail Technician",
-    description: "Manicures & Pedicures",
-    id: "nailTechnician",
-  },
-];
-const businessName = "A Salon";
-const address = "123 Main Street, Cityville, ST 45678, Country";
-const phone = "+2712 345 6789";
-const email = "example@gmail.com";
-
-//#endregion
-window.addEventListener("load", () => {
-  setpUpSite();
-});
-
 function setpUpSite() {
-  document.querySelector("#bname").innerText = businessName;
-  document.querySelector("#name").innerText = businessName;
-  document.querySelector("#phone").innerText = phone;
-  document.querySelector("#email").innerText = email;
-  document.querySelector("#address").innerText = address;
-
   if (document.querySelector("#cards")) {
     setUpCards();
   }
-  doEverythingElse();
-}
-
-function setUpCards() {
-  let cardsList = document.querySelector("#cards");
-  let container = document.createElement("div");
-  container.classList.add("container");
-  let cardsHolder = document.createElement("div");
-  cardsHolder.id = "cardsHolder";
-  cardsHolder.classList.add("row");
-
-  practitioners.forEach((practition) => {
-    //outside and card its self
-    let outerCard = document.createElement("div");
-    outerCard.classList = "col-md-6 col-lg-4 mb-4";
-    let card = document.createElement("div");
-    card.classList = "card h-100";
-    let innerCard = document.createElement("div");
-    innerCard.classList = "row g-0 h-100";
-
-    //Image part of card
-    let imageBox = document.createElement("div");
-    imageBox.classList = "col-4";
-    let image = document.createElement("img");
-    image.classList = "img-fluid rounded-start h-100";
-    image.src = `/Images/${practition.name.toLowerCase()}.jpg`;
-    image.alt = practition.name;
-    image.style.objectFit = "cover";
-    imageBox.appendChild(image);
-    innerCard.appendChild(imageBox);
-
-    //text content of box
-    let contentBox = document.createElement("div");
-    contentBox.classList = "col-8";
-    let contentBody = document.createElement("div");
-    contentBody.classList = "card-body d-flex flex-column";
-
-    let heading = document.createElement("h5");
-    heading.classList = "card-title";
-    heading.innerText = practition.practition;
-    contentBody.appendChild(heading);
-
-    let descrip = document.createElement("p");
-    descrip.classList = "card-text";
-    descrip.innerText = practition.description;
-    contentBody.appendChild(descrip);
-
-    let name = document.createElement("p");
-    name.classList = "card-text";
-    let small = document.createElement("small");
-    small.classList = "text-body-secondary";
-    small.innerText = practition.name;
-    name.appendChild(small);
-    contentBody.appendChild(name);
-
-    let button = document.createElement("button");
-    button.classList = "btn btn-primary mt-auto bookNow";
-    button.id = practition.id;
-    button.innerText = "Book Now";
-    contentBody.appendChild(button);
-
-    contentBox.appendChild(contentBody);
-    innerCard.appendChild(contentBox);
-    card.appendChild(innerCard);
-    outerCard.appendChild(card);
-    cardsHolder.appendChild(outerCard);
-  });
-  container.appendChild(cardsHolder);
-  cardsList.appendChild(container);
 }
 
 //constructor function
@@ -346,11 +245,14 @@ async function sendMessage(name, code, number, date) {
   };
 
   try {
-    const response = await fetch("http://localhost:5000/api/whatsapp/send-whatsapp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(messageData),
-    });
+    const response = await fetch(
+      "http://localhost:5000/api/whatsapp/send-whatsapp",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(messageData),
+      }
+    );
 
     const data = await response.json();
     //console.log("WhatsApp message sent:", data);
@@ -358,8 +260,7 @@ async function sendMessage(name, code, number, date) {
     console.error("Error sending WhatsApp message:", error);
   }
 }
-
-function doEverythingElse() {
+document.addEventListener("DOMContentLoaded", function () {
   //#region Section tracker
   var selectedPractition = "";
   var sectionCounter = 0;
@@ -565,9 +466,20 @@ function doEverythingElse() {
       const bookingDate = bookingStart.toISOString().split("T")[0]; // Extract YYYY-MM-DD
 
       if (bookingDate === date) {
-        let startTime = `${bookingStart.getHours().toString().padStart(2, '0')}:${bookingStart.getMinutes().toString().padStart(2, '0')}`;
-        let endTime = `${bookingEnd.getHours().toString().padStart(2, '0')}:${bookingEnd.getMinutes().toString().padStart(2, '0')}`;
-
+        let startTime = `${bookingStart
+          .getHours()
+          .toString()
+          .padStart(2, "0")}:${bookingStart
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")}`;
+        let endTime = `${bookingEnd
+          .getHours()
+          .toString()
+          .padStart(2, "0")}:${bookingEnd
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")}`;
 
         let currentSlot = startTime;
         while (currentSlot < endTime) {
@@ -609,10 +521,10 @@ function doEverythingElse() {
       minutes = 0;
       hours += 1;
     }
-    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    return `${String(hours).padStart(
       2,
       "0"
-    )}`;
+    )}:${String(minutes).padStart(2, "0")}`;
   }
 
   //adds the event listner of the time slot option buttons
@@ -999,4 +911,4 @@ function doEverythingElse() {
   }
 
   //#endregion
-}
+});
