@@ -14,6 +14,8 @@ dotenv.config(); // Load environment variables
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+// Middleware to handle JSON and URL-encoded data
 // Add routes
 app.use("/", navRoutes);
 app.use("/api/bookings", bookingRoutes);
@@ -29,10 +31,7 @@ const host = process.env.HOST || "localhost";
 const mongoURL = process.env.MONGODB_URI;
 
 mongoose
-  .connect(mongoURL, {
-    serverSelectionTimeoutMS: 5000, // Timeout value can still be useful
-    connectTimeoutMS: 10000,
-  })
+  .connect(mongoURL)
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 

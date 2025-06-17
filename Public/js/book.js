@@ -192,11 +192,14 @@ async function createEvent(
   console.log("Booking data:", bookingData);
 
   try {
-    const bookingResponse = await fetch("http://localhost:5000/api/bookings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bookingData),
-    });
+    const bookingResponse = await fetch(
+      "http://localhost:5000/api/bookings/add",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookingData),
+      }
+    );
     const bookingResult = await bookingResponse.json();
 
     if (bookingResponse.ok) {
@@ -218,7 +221,7 @@ async function createEvent(
 async function deleteEvent(bookingId) {
   try {
     const response = await fetch(
-      `http://localhost:5000/api/bookings/${bookingId}`,
+      `http://localhost:5000/api/bookings/delete/${bookingId}`,
       {
         method: "DELETE",
       }
@@ -672,136 +675,117 @@ document.addEventListener("DOMContentLoaded", function () {
   //#endregion
 
   //#region Confirm booking
-  //prevent form from refreshing page and letting user know if booking was successful
-  let startTime = "";
   if (document.getElementById("former")) {
     document
       .getElementById("former")
       .addEventListener("submit", async function (event) {
         event.preventDefault();
 
-        document.querySelector(".pagination").innerHTML = "";
         const name = document.getElementById("floatingInput").value;
         const phone = document.getElementById("floatingTel").value;
+        const selectedSlot = document.querySelector("#calendar .selected-slot");
+        const startTime = selectedSlot.innerText;
 
-        var duration = getDurationByType(appointName);
+        const duration = getDurationByType(appointName);
+        const endTime = addMinutesToTime(startTime, duration);
 
-        let selectedSlot = document.querySelector("#calendar .selected-slot");
-        startTime = selectedSlot.innerText;
+        const formatedStartDate = `${currentDate}T${startTime}:00+02:00`;
+        const formatedEndDate = `${currentDate}T${endTime}:00+02:00`;
 
-        let endTime = addMinutesToTime(startTime, duration);
-        let formatedStartDate = `${currentDate}T${startTime}:00+02:00`;
-        let formatedEndDate = `${currentDate}T${endTime}:00+02:00`;
-        let code = "";
-        appointmentTypes.forEach((appoint) => {
-          if (appoint.type == appointName) {
-            code = appoint.code;
-          }
+        const code = generateCode(appointName, currentDate, startTime);
+
+        const bookingData = {
+          practitioner: selectedPractition,
+          code,
+          name,
+          service: appointName,
+          startTime: formatedStartDate,
+          endTime: formatedEndDate,
+          phone,
+        };
+
+        document.querySelectorAll(".page-item").forEach((item) => {
+          item.remove();
         });
-        let fullCode = `${code}${currentDate.substring(
-          2,
-          4
-        )}${currentDate.substring(5, 7)}${currentDate.substring(
-          8,
-          10
-        )}${startTime.substring(0, 2)}${startTime.substring(3, 5)}`;
+
         try {
-          await createEvent(
-            selectedPractition,
-            appointName,
-            formatedStartDate,
-            formatedEndDate,
-            name,
-            phone,
-            fullCode
+          const response = await fetch(
+            "http://localhost:5000/api/bookings/add",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(bookingData),
+            }
           );
+
+          const result = await response.json();
+          console.log("Result:", result);
+
+          if (response.ok) {
+            document.querySelectorAll(".remove").forEach((item) => {
+              item.classList.add("hiding");
+            });
+            console.log("Booking created successfully:", result);
+            area = document.querySelector("#bookingStatus");
+            area.classList.remove("hiding");
+            area.innerText = "Booking Successful";
+            document.querySelector("#bookingStatus").classList.add("success");
+            document.querySelector("#code").classList.remove("hiding");
+            document.querySelector("#cont").classList.remove("hiding");
+
+            let codeBox = document.createElement("div");
+            codeBox.id = "codeBox";
+            codeBox.innerText = `Appointment Code: ${result.booking.code}`;
+            codeBox.style.fontWeight = "bold";
+            document.querySelector("#code").appendChild(codeBox);
+            // sendMessage(
+            //   name,
+            //   code,
+            //   `+27${phone.substring(1)}`,
+            //   `${currentDate} at ${startTime}`
+            // );
+          } else {
+            document.querySelectorAll(".remove").forEach((item) => {
+              item.classList.add("hiding");
+            });
+            area = document.querySelector("#bookingStatus");
+            area.innerText = result.error || "Booking Failed";
+            document.querySelector("#bookingStatus").classList.add("unsuccess");
+            document.querySelector("#cont").classList.remove("hiding");
+          }
         } catch (err) {
-          alert("Booking unsuccessful. Please try again");
-          console.error(err);
-        }
-
-        let success = await checkIfSuccess(
-          fullCode,
-          formatedStartDate,
-          formatedEndDate
-        );
-        if (success) {
-          let date = `${currentDate} at ${startTime}`;
-          let phoneNum = `+27${phone.substring(1, phone.length)}`;
-          sendMessage(name, fullCode, phoneNum, date);
+          console.error("Error:", err);
+          document.querySelector("#bookingStatus").innerText =
+            "Server error. Try again.";
+          document.querySelector("#bookingStatus").classList.add("unsuccess");
         }
       });
-
-    async function checkIfSuccess(fullCode, start, end) {
-      let dayStart = `${currentDate}T00:00:00.000Z`;
-      let dayEnd = `${currentDate}T23:59:59.999Z`;
-      await fetchEvents(selectedPractition, dayStart, dayEnd);
-
-      var successful = false;
-      bookings.forEach((booking) => {
-        let checkCode = booking.code;
-
-        if (fullCode == checkCode) {
-          successful = true;
-        }
-      });
-
-      if (successful) {
-        document.querySelectorAll(".remove").forEach((item) => {
-          item.classList.add("hiding");
-        });
-        const area = document.querySelector("#bookingStatus");
-        area.innerText = "Booking Successful";
-        area.classList.remove("hiding");
-        area.classList.add("success");
-        document.querySelector("#code").classList.remove("hiding");
-        document.querySelector(
-          "#code"
-        ).innerText = `Appointment made for:\n${currentDate} at ${startTime}\n\nAppointment code:\n`;
-        let codeBox = document.createElement("div");
-        codeBox.id = "codeBox";
-        codeBox.innerText = fullCode;
-        codeBox.style.fontWeight = "bold";
-        document.querySelector("#code").appendChild(codeBox);
-        let button = document.querySelector("#cont");
-        button.classList.remove("hiding");
-        return true;
-      } else {
-        document.querySelectorAll(".remove").forEach((item) => {
-          item.classList.add("hiding");
-        });
-        const area = document.querySelector("#bookingStatus");
-        area.innerText = "Booking was unsuccessful";
-        area.classList.remove("hiding");
-        area.classList.add("unsuccess");
-        return false;
-      }
-    }
-    document.getElementById("former").reset();
-
-    //reloads page
-    document.querySelector("#cont").addEventListener("click", () => {
-      location.reload();
-    });
-
-    //adds the duration of an event to the start time
-    function addMinutesToTime(time, minutesToAdd) {
-      let [hours, minutes] = time.split(":").map(Number);
-      minutes += minutesToAdd;
-
-      while (minutes >= 60) {
-        minutes -= 60;
-        hours += 1;
-      }
-
-      return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
-        2,
-        "0"
-      )}`;
-    }
   }
-  //#endregion
 
+  document.querySelector("#cont").addEventListener("click", () => {
+    location.reload();
+  });
+
+  function addMinutesToTime(time, minutesToAdd) {
+    let [hours, minutes] = time.split(":").map(Number);
+    minutes += minutesToAdd;
+    while (minutes >= 60) {
+      minutes -= 60;
+      hours += 1;
+    }
+    return `${String(hours).padStart(
+      2,
+      "0"
+    )}:${String(minutes).padStart(2, "0")}`;
+  }
+
+  function generateCode(appointName, currentDate, startTime) {
+    let code =
+      appointmentTypes.find((a) => a.type === appointName)?.code || "XX";
+    return `${code}${currentDate.substring(2, 4)}${currentDate.substring(5, 7)}${currentDate.substring(8, 10)}${startTime.replace(":", "")}`;
+  }
+
+  //#endregion
   //#region Cancelations
   let code = "";
   let cBooking = {
@@ -828,8 +812,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         var successful = false;
         bookings.forEach((booking) => {
-          let descrip = booking.description;
-          let checkCode = descrip.substring(0, 13);
+          let checkCode = booking.code;
 
           if (code == checkCode) {
             successful = true;
@@ -874,7 +857,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .querySelector("#deletebook")
       .addEventListener("click", async () => {
         if (cBooking.id) {
-          await deleteEvent(practition, cBooking.id, code);
+          await deleteEvent(cBooking.code);
         }
 
         let dates = getDatesFromCode(code);
@@ -882,7 +865,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         var successful = true;
         bookings.forEach((booking) => {
-          if (booking.id == cBooking.id) {
+          if (booking.code == cBooking.code) {
+            console.log(booking);
+            console.log(cBooking);
+            console.log(`${booking.code} == ${cBooking.code}`);
             successful = false;
           }
         });

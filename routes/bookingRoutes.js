@@ -36,7 +36,7 @@ router.get("/", async (req, res) => {
 });
 
 // Create a new booking
-router.post("/", async (req, res) => {
+router.post("/add", async (req, res) => {
   try {
     const { practitioner, code, name, service, startTime, endTime, phone } =
       req.body;
@@ -52,10 +52,30 @@ router.post("/", async (req, res) => {
     ) {
       return res.status(400).json({ error: "All fields are required" });
     }
+    // Check for booking conflicts
+    const conflict = await Booking.findOne({
+      practitioner,
+      $or: [
+        { startTime: { $lt: new Date(endTime), $gte: new Date(startTime) } },
+        { endTime: { $gt: new Date(startTime), $lte: new Date(endTime) } },
+        {
+          $and: [
+            { startTime: { $lte: new Date(startTime) } },
+            { endTime: { $gte: new Date(endTime) } },
+          ],
+        },
+      ],
+    });
+
+    if (conflict) {
+      return res
+        .status(409)
+        .json({ error: "Time slot already booked for this practitioner" });
+    }
 
     // Ensure that the 'code' is included and is unique
-    const existingBooking = await Booking.findOne({ code });
-    if (existingBooking) {
+    const existing = await Booking.findOne({ code });
+    if (existing) {
       return res
         .status(400)
         .json({ error: "Booking with this code already exists" });
@@ -72,8 +92,10 @@ router.post("/", async (req, res) => {
     });
 
     await booking.save();
-    res.status(200).json({ message: "Booking created", booking: booking });
+    console.log("Booking created:", booking);
+    res.status(201).json({ message: "Booking created", booking });
   } catch (err) {
+    console.error("Error creating booking:", err);
     res
       .status(500)
       .json({ error: "Failed to create booking", details: err.message });
@@ -81,7 +103,7 @@ router.post("/", async (req, res) => {
 });
 
 // Delete a booking by custom eventId
-router.delete("/:code", async (req, res) => {
+router.delete("/delete:code", async (req, res) => {
   try {
     const { code } = req.params;
 

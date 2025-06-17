@@ -1,41 +1,11 @@
 <%- include('./partials/head') %> 
   <body>
-    <nav class="navbar navbar-expand-lg bg-body-tertiary">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="#">Cancelations</a>
-        <h2 id="name" class="navName navbar-title m-0"></h2>
-
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav">
-            <li class="nav-item">
-              <a class="nav-link" href="/">Home</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">Pricing</a>
-            </li>
-          </ul>
-
-          <div class="flex-grow-1 text-center">
-            <h2 id="name" class="Htitle navbar-title m-0">A Salon</h2>
-          </div>
-        </div>
-      </div>
-    </nav>
+    <%- include('./partials/navbar') %>
 
     <main>
       <section class="controls">
         <form id="cancel">
+        <h1 class="text-center">Cancel Appointment</h1>
           <div id="texting" class="form-floating mb-3 in">
             <input
               type="text"
