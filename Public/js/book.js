@@ -126,12 +126,6 @@ const appointmentTypes = [
   },
 ];
 
-function setpUpSite() {
-  if (document.querySelector("#cards")) {
-    setUpCards();
-  }
-}
-
 //constructor function
 class Booking {
   constructor(name, startTime, endTime, service, code) {
@@ -166,54 +160,6 @@ async function fetchEvents(practitioner, minDate, maxDate) {
     //console.log(bookings);
   } catch (error) {
     console.error("Error fetching events:", error);
-  }
-}
-
-//function that inserts the event into the google calendar
-async function createEvent(
-  practitioner,
-  service,
-  startTime,
-  endTime,
-  name,
-  phone,
-  code
-) {
-  const bookingData = {
-    code,
-    name,
-    practitioner,
-    service,
-    startTime,
-    endTime,
-    phone,
-  };
-
-  console.log("Booking data:", bookingData);
-
-  try {
-    const bookingResponse = await fetch(
-      "http://localhost:5000/api/bookings/add",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookingData),
-      }
-    );
-    const bookingResult = await bookingResponse.json();
-
-    if (bookingResponse.ok) {
-      console.log("Event created and booking saved:", {
-        mongoBooking: bookingResult,
-      });
-    } else {
-      console.error(
-        "Failed to save data:",
-        bookingResult.error || bookingResult
-      );
-    }
-  } catch (error) {
-    console.error("Error creating event:", error);
   }
 }
 
@@ -719,7 +665,6 @@ document.addEventListener("DOMContentLoaded", function () {
           );
 
           const result = await response.json();
-          console.log("Result:", result);
 
           if (response.ok) {
             document.querySelectorAll(".remove").forEach((item) => {
@@ -750,7 +695,8 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             area = document.querySelector("#bookingStatus");
             area.innerText = result.error || "Booking Failed";
-            document.querySelector("#bookingStatus").classList.add("unsuccess");
+            area.classList.add("unsuccess");
+            area.classList.remove("hiding");            
             document.querySelector("#cont").classList.remove("hiding");
           }
         } catch (err) {
