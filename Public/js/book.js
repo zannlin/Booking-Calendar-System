@@ -466,7 +466,7 @@ document.addEventListener("DOMContentLoaded", function () {
           if (
             (currentYear === currentYearCheck &&
               currentMonth === currentMonthCheck &&
-              day < currentDay) ||
+              day <= currentDay) ||
             currentYear < currentYearCheck ||
             (currentYear === currentYearCheck &&
               currentMonth < currentMonthCheck)
