@@ -20,112 +20,6 @@ const timeSlots = [
   "16:30",
 ];
 const timeOff = "tmo";
-const appointmentTypes = [
-  { type: "Haircut", duration: 30, practition: "Hair Stylist", code: "hrc" },
-  {
-    type: "Hair Wash & Blow Dry",
-    duration: 45,
-    practition: "Hair Stylist",
-    code: "hwb",
-  },
-  {
-    type: "Hair Coloring",
-    duration: 90,
-    practition: "Hair Stylist",
-    code: "hcl",
-  },
-  {
-    type: "Hair Styling",
-    duration: 60,
-    practition: "Hair Stylist",
-    code: "hst",
-  },
-  {
-    type: "Keratin Treatment",
-    duration: 120,
-    practition: "Hair Stylist",
-    code: "krt",
-  },
-  {
-    type: "Hair Extensions",
-    duration: 150,
-    practition: "Hair Stylist",
-    code: "hex",
-  },
-  {
-    type: "Basic Facial",
-    duration: 45,
-    practition: "Esthetician",
-    code: "bfc",
-  },
-  {
-    type: "Deep Cleansing Facial",
-    duration: 60,
-    practition: "Esthetician",
-    code: "dcf",
-  },
-  {
-    type: "Chemical Peel",
-    duration: 30,
-    practition: "Esthetician",
-    code: "chp",
-  },
-  {
-    type: "Microdermabrasion",
-    duration: 60,
-    practition: "Esthetician",
-    code: "mdb",
-  },
-  {
-    type: "Acne Treatment",
-    duration: 75,
-    practition: "Esthetician",
-    code: "act",
-  },
-  {
-    type: "Anti-Aging Facial",
-    duration: 90,
-    practition: "Esthetician",
-    code: "aaf",
-  },
-  {
-    type: "Basic Manicure",
-    duration: 30,
-    practition: "Nail Technician",
-    code: "bmc",
-  },
-  {
-    type: "Gel Manicure",
-    duration: 45,
-    practition: "Nail Technician",
-    code: "gmc",
-  },
-  {
-    type: "Acrylic Nails Full Set",
-    duration: 90,
-    practition: "Nail Technician",
-    code: "anf",
-  },
-  {
-    type: "Nail Art Design",
-    duration: 60,
-    practition: "Nail Technician",
-    code: "nad",
-  },
-  {
-    type: "Pedicure",
-    duration: 45,
-    practition: "Nail Technician",
-    code: "pdc",
-  },
-  {
-    type: "Gel Removal & Reapply",
-    duration: 60,
-    practition: "Nail Technician",
-    code: "gra",
-  },
-];
-
 //constructor function
 class Booking {
   constructor(name, startTime, endTime, service, code) {
@@ -210,6 +104,7 @@ async function sendMessage(name, code, number, date) {
   }
 }
 document.addEventListener("DOMContentLoaded", function () {
+  getAppointmentTypes();
   //#region Section tracker
   var selectedPractition = "";
   var sectionCounter = 0;
@@ -270,7 +165,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function whatToLoad() {
     if (sectionCounter == 1) {
-      getAppointmentTypes();
+      renderAppointments();
     } else if (sectionCounter == 2) {
       // Deselect previously selected slot
       const selectedSlot = document.querySelector(".selected-slot");
@@ -297,24 +192,38 @@ document.addEventListener("DOMContentLoaded", function () {
       updateCalendar();
     }
   }
-
   //#endregion
 
   //#region Appointment types
 
-  var appointName = "";
-  //fill the list with appointment types based on the practition selected
-  function getAppointmentTypes() {
-    var box = document.querySelector("#apointList");
+  let appointmentTypesFromDB = [];
+
+  async function getAppointmentTypes() {
+    try {
+      const res = await fetch("http://localhost:5000/api/appointments");
+      const data = await res.json();
+      appointmentTypesFromDB = data;
+      console.log("Appointment types fetched:", appointmentTypesFromDB);
+    } catch (err) {
+      console.error("Failed to fetch appointment types", err);
+    }
+  }
+
+  function renderAppointments() {
+    const box = document.querySelector("#apointList");
     box.innerHTML = "";
-    appointmentTypes.forEach((appoint) => {
-      if (appoint.practition == selectedPractition) {
-        var button = document.createElement("button");
-        button.innerHTML = appoint.type;
-        button.classList.add("list-group-item");
-        box.appendChild(button);
-      }
+
+    const filtered = appointmentTypesFromDB.filter(
+      (appt) => appt.practition === selectedPractition
+    );
+
+    filtered.forEach((appoint) => {
+      const button = document.createElement("button");
+      button.innerHTML = appoint.name; // or .type if that's how you saved it
+      button.classList.add("list-group-item");
+      box.appendChild(button);
     });
+
     addListEventListener();
   }
 
@@ -359,8 +268,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function getDurationByType(appointmentType) {
-    const appointment = appointmentTypes.find(
-      (item) => item.type === appointmentType
+    const appointment = appointmentTypesFromDB.find(
+      (item) => item.name === appointmentType
     );
     return appointment ? appointment.duration : null;
   }
@@ -639,6 +548,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const formatedEndDate = `${currentDate}T${endTime}:00+02:00`;
 
         const code = generateCode(appointName, currentDate, startTime);
+        console.log(code);
 
         const bookingData = {
           practitioner: selectedPractition,
@@ -649,6 +559,8 @@ document.addEventListener("DOMContentLoaded", function () {
           endTime: formatedEndDate,
           phone,
         };
+
+        console.log("Booking data:", bookingData);
 
         document.querySelectorAll(".page-item").forEach((item) => {
           item.remove();
@@ -696,7 +608,7 @@ document.addEventListener("DOMContentLoaded", function () {
             area = document.querySelector("#bookingStatus");
             area.innerText = result.error || "Booking Failed";
             area.classList.add("unsuccess");
-            area.classList.remove("hiding");            
+            area.classList.remove("hiding");
             document.querySelector("#cont").classList.remove("hiding");
           }
         } catch (err) {
@@ -706,11 +618,11 @@ document.addEventListener("DOMContentLoaded", function () {
           document.querySelector("#bookingStatus").classList.add("unsuccess");
         }
       });
-  }
 
-  document.querySelector("#cont").addEventListener("click", () => {
-    location.reload();
-  });
+    document.querySelector("#cont").addEventListener("click", () => {
+      location.reload();
+    });
+  }
 
   function addMinutesToTime(time, minutesToAdd) {
     let [hours, minutes] = time.split(":").map(Number);
@@ -727,16 +639,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function generateCode(appointName, currentDate, startTime) {
     let code =
-      appointmentTypes.find((a) => a.type === appointName)?.code || "XX";
+      appointmentTypesFromDB.find((a) => a.name === appointName)?.code || "XX";
     return `${code}${currentDate.substring(2, 4)}${currentDate.substring(5, 7)}${currentDate.substring(8, 10)}${startTime.replace(":", "")}`;
   }
 
   //#endregion
   //#region Cancelations
   let code = "";
-  let cBooking = {
-    type: "Hair Wash & Blow Dry",
-  };
+  let cBooking = {};
   let practition = "";
   if (document.querySelector("#cancel")) {
     document
@@ -748,7 +658,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let dates = getDatesFromCode(code);
         let appointCode = code.substring(0, 3);
 
-        appointmentTypes.forEach((type) => {
+        appointmentTypesFromDB.forEach((type) => {
           if (type.code == appointCode) {
             practition = type.practition;
           }
@@ -802,7 +712,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document
       .querySelector("#deletebook")
       .addEventListener("click", async () => {
-        if (cBooking.id) {
+        if (cBooking.code) {
           await deleteEvent(cBooking.code);
         }
 
