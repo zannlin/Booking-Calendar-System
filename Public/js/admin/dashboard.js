@@ -76,9 +76,8 @@ async function loadBusiestTimeslotsChart() {
   }
 
   const labels = data.map((d) => d.time); // ← Label (e.g., "08:00", "10:30")
-  const values = data.map((d) => d.count); // ← Booking count
 
-  const counts = data.map((item) => item.count); // e.g., 5 bookings
+  const counts = data.map((item) => item.count); 
 
   new Chart(document.getElementById("busiestTimeslotsChart"), {
     type: "bar",
@@ -259,7 +258,6 @@ async function loadBusiestDaysChart() {
       plugins: {
         title: {
           display: true,
-          text: "Busiest Days of the Week",
         },
       },
     },
