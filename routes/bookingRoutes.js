@@ -103,7 +103,7 @@ router.post("/add", async (req, res) => {
 });
 
 // Delete a booking by custom eventId
-router.delete("/delete:code", async (req, res) => {
+router.delete("/delete/:code", async (req, res) => {
   try {
     const { code } = req.params;
 

@@ -9,7 +9,9 @@ router.get("/", async (req, res) => {
     const appointments = await Appointment.find().sort({ name: 1 });
     res.json(appointments);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch appointments", details: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to fetch appointments", details: err.message });
   }
 });
 
@@ -35,7 +37,9 @@ router.post("/", async (req, res) => {
     const savedAppointment = await newAppointment.save();
     res.status(201).json(savedAppointment);
   } catch (err) {
-    res.status(500).json({ error: "Failed to create appointment", details: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to create appointment", details: err.message });
   }
 });
 
@@ -64,7 +68,9 @@ router.put("/:id", async (req, res) => {
 
     res.json(updatedAppointment);
   } catch (err) {
-    res.status(500).json({ error: "Failed to update appointment", details: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to update appointment", details: err.message });
   }
 });
 
@@ -81,7 +87,9 @@ router.delete("/:id", async (req, res) => {
 
     res.json({ message: "Appointment deleted successfully" });
   } catch (err) {
-    res.status(500).json({ error: "Failed to delete appointment", details: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to delete appointment", details: err.message });
   }
 });
 
@@ -90,10 +98,15 @@ router.get("/practitioner/:practitioner", async (req, res) => {
   const { practitioner } = req.params;
 
   try {
-    const appointments = await Appointment.find({ practition: practitioner }).sort({ name: 1 });
+    const appointments = await Appointment.find({
+      practition: practitioner,
+    }).sort({ name: 1 });
     res.json(appointments);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch appointments for practitioner", details: err.message });
+    res.status(500).json({
+      error: "Failed to fetch appointments for practitioner",
+      details: err.message,
+    });
   }
 });
 
