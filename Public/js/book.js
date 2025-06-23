@@ -174,19 +174,16 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       // Clear morning slots
-      const morn = document.querySelector("#morning");
-      if (morn) {
+      const morningSlots = document.querySelector("#morning");
+      if (morningSlots) {
         // Convert children to array to use forEach
-        Array.from(morn.children).forEach((child) => {
+        Array.from(morningSlots.children).forEach((child) => {
           child.remove();
         });
       }
 
       // Deselect selected date (if any)
-      const selected = document.querySelector(".selected");
-      if (selected) {
-        selected.classList.remove("selected");
-      }
+      genereateTimeSlots();
 
       // Initial Render
       updateCalendar();
@@ -219,7 +216,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     filtered.forEach((appoint) => {
       const button = document.createElement("button");
-      button.innerHTML = appoint.name; // or .type if that's how you saved it
+      button.innerHTML = appoint.name;
       button.classList.add("list-group-item");
       box.appendChild(button);
     });
@@ -442,8 +439,6 @@ document.addEventListener("DOMContentLoaded", function () {
     let currentYearCheck = today.getFullYear();
     var start = toISODateString(new Date(currentYear, currentMonth, 1));
     var end = toISODateString(new Date(currentYear, currentMonth + 1, 0, 23));
-    startD = start;
-    endD = end;
 
     bookings = [];
     await fetchEvents(selectedPractition, start, end);
@@ -462,7 +457,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (day) {
           cell.innerText = day;
           cell.classList.add("day");
-          // Disable past days
+          // Disable past days and current day
           if (
             (currentYear === currentYearCheck &&
               currentMonth === currentMonthCheck &&
